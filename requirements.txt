@@ -1,0 +1,23 @@
+# FastAPI и компоненты
+fastapi==0.110.0
+uvicorn==0.27.1
+pydantic==2.6.1
+pydantic-settings==2.1.0
+pydantic-extra-types==2.2.0
+email-validator==2.1.0
+
+# Работа с БД
+sqlalchemy==2.0.27
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
+# Аутентификация и безопасность
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.7
+
+# Утилиты
+python-dotenv==1.0.0
+httpx==0.26.0
+pytest==7.4.3
+tenacity==8.2.3 

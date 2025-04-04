@@ -1,0 +1,32 @@
+Generic single-database configuration for Alembic.
+
+Alembic Commands:
+================
+
+Generate a new migration:
+```
+alembic revision --autogenerate -m "Migration description"
+```
+
+Apply all migrations:
+```
+alembic upgrade head
+```
+
+Downgrade to a specific migration:
+```
+alembic downgrade <revision>
+```
+
+Get current migration status:
+```
+alembic current
+```
+
+List all migrations:
+```
+alembic history
+```
+
+For more information, visit:
+https://alembic.sqlalchemy.org/en/latest/ 

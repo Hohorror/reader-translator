@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подготовка книг - Сопоставление текстов</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        .prepare-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .file-list {
+            margin-top: 20px;
+        }
+        
+        .file-card {
+            background-color: var(--bg-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .file-card.is-prepared {
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .file-info {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        
+        .file-meta {
+            color: var(--text-color-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .prepare-form {
+            background-color: var(--bg-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        
+        .form-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .text-area-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .text-area-wrapper {
+            flex: 1;
+        }
+        
+        .text-area-wrapper textarea {
+            width: 100%;
+            height: 400px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            resize: vertical;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .action-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .success-label {
+            display: inline-block;
+            background-color: var(--success-color);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+        
+        .prepare-status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .prepare-status.success {
+            background-color: rgba(25, 135, 84, 0.1);
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+            display: block;
+        }
+        
+        .prepare-status.error {
+            background-color: rgba(220, 53, 69, 0.1);
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div class="navbar-brand">PDF Просмотрщик с переводом</div>
+        <nav>
+            <a href="/profile">Личный кабинет</a>
+            <a href="/logout" class="logout-btn">Выйти</a>
+        </nav>
+    </header>
+
+    <div class="prepare-container">
+        <h1>Подготовка книг - Сопоставление текстов</h1>
+        <p>Здесь вы можете предварительно обработать ваши книги, создав сопоставление между английским и русским текстом.</p>
+        
+        <div class="file-list">
+            <h2>Ваши файлы</h2>
+            {% if files %}
+                {% for file in files %}
+                    <div class="file-card {% if file.is_prepared %}is-prepared{% endif %}">
+                        <div class="file-info">
+                            <div class="file-name">{{ file.original_filename }}</div>
+                            <div class="file-meta">
+                                Размер: {{ (file.file_size / 1024)|round(1) }} KB
+                                {{ "• Дата загрузки: " + file.upload_date if file.upload_date else "" }}
+                                {% if file.is_prepared %}
+                                    <span class="success-label">Подготовлен</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="action-btn prepare-btn" onclick="showPrepareForm('{{ file.filename }}', '{{ file.original_filename }}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>
+                                {% if file.is_prepared %}Переподготовить{% else %}Подготовить{% endif %}
+                            </button>
+                            <a href="/view?file={{ file.filename }}&name={{ file.original_filename }}" class="action-btn view-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                Просмотр
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>У вас пока нет загруженных файлов.</p>
+            {% endif %}
+        </div>
+        
+        <div id="prepareForm" class="prepare-form">
+            <div class="form-title">Подготовка книги: <span id="prepareFileName"></span></div>
+            
+            <input type="hidden" id="prepareFileId" value="">
+            
+            <div class="text-area-container">
+                <div class="text-area-wrapper">
+                    <div class="input-group">
+                        <label for="englishText">Английский текст</label>
+                        <textarea id="englishText" placeholder="Вставьте английский текст книги сюда"></textarea>
+                    </div>
+                </div>
+                
+                <div class="text-area-wrapper">
+                    <div class="input-group">
+                        <label for="russianText">Русский текст</label>
+                        <textarea id="russianText" placeholder="Вставьте русский перевод книги сюда"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="prepareStatus" class="prepare-status"></div>
+            
+            <div class="actions">
+                <button class="action-btn cancel-btn" onclick="hidePrepareForm()">Отмена</button>
+                <button class="action-btn prepare-submit-btn" onclick="prepareBookMapping()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>
+                    Подготовить
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Показать форму подготовки для выбранного файла
+        function showPrepareForm(fileId, fileName) {
+            document.getElementById('prepareFileId').value = fileId;
+            document.getElementById('prepareFileName').textContent = fileName;
+            document.getElementById('prepareForm').style.display = 'block';
+            
+            // Очищаем предыдущие статусы
+            const statusElement = document.getElementById('prepareStatus');
+            statusElement.innerHTML = '';
+            statusElement.className = 'prepare-status';
+            
+            // Прокручиваем страницу к форме
+            document.getElementById('prepareForm').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Скрыть форму подготовки
+        function hidePrepareForm() {
+            document.getElementById('prepareForm').style.display = 'none';
+            document.getElementById('englishText').value = '';
+            document.getElementById('russianText').value = '';
+        }
+        
+        // Подготовить книгу - создать сопоставление
+        async function prepareBookMapping() {
+            const fileId = document.getElementById('prepareFileId').value;
+            const englishText = document.getElementById('englishText').value;
+            const russianText = document.getElementById('russianText').value;
+            
+            if (!englishText || !russianText) {
+                showStatus('Необходимо заполнить оба текстовых поля', 'error');
+                return;
+            }
+            
+            try {
+                // Отправляем запрос на подготовку книги
+                const response = await fetch('/api/prepare-book', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        file_id: fileId,
+                        english_text: englishText,
+                        russian_text: russianText
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Ошибка при подготовке книги');
+                }
+                
+                const data = await response.json();
+                
+                // Показываем статус успешной подготовки
+                showStatus('Книга успешно подготовлена! Теперь вы можете открыть ее для просмотра с точным переводом.', 'success');
+                
+                // Обновляем страницу через 2 секунды
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+                
+            } catch (error) {
+                showStatus(`Ошибка: ${error.message}`, 'error');
+            }
+        }
+        
+        // Показать статус операции
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('prepareStatus');
+            statusElement.innerHTML = message;
+            statusElement.className = `prepare-status ${type}`;
+        }
+    </script>
+</body>
+</html> 

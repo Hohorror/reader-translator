@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Авторизация | Book Reader & Translator</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Приложение для чтения книг с расширенными возможностями перевода и озвучивания для изучения иностранных языков">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <h1>Book Reader & Translator</h1>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="main-content">
+      <!-- Карточка входа -->
+      <div id="login-form-container" class="card">
+        <h2 class="card-title">Добро пожаловать!</h2>
+        <p class="app-description">Удобный сервис для чтения и изучения книг с интерактивным переводом и озвучиванием текста</p>
+        <div id="login-alert" class="alert hidden"></div>
+        <form id="login-form">
+          <div class="form-group">
+            <label for="login-username" class="form-label">Имя пользователя</label>
+            <input type="text" id="login-username" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="login-password" class="form-label">Пароль</label>
+            <input type="password" id="login-password" class="form-control" required>
+          </div>
+          <button type="submit" class="btn btn-block">Войти</button>
+        </form>
+        <div class="switch-form">
+          <p>Нет аккаунта? <a href="#" id="register-link">Зарегистрироваться</a></p>
+        </div>
+      </div>
+
+      <!-- Карточка регистрации -->
+      <div id="register-form-container" class="card hidden">
+        <h2 class="card-title">Регистрация</h2>
+        <div id="register-alert" class="alert hidden"></div>
+        <form id="register-form">
+          <div class="form-group">
+            <label for="register-username" class="form-label">Имя пользователя</label>
+            <input type="text" id="register-username" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="register-email" class="form-label">Email</label>
+            <input type="email" id="register-email" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="register-password" class="form-label">Пароль</label>
+            <input type="password" id="register-password" class="form-control" required minlength="6">
+            <small class="text-secondary">Минимум 6 символов</small>
+          </div>
+          <button type="submit" class="btn btn-block">Зарегистрироваться</button>
+        </form>
+        <div class="switch-form">
+          <p>Уже есть аккаунт? <a href="#" id="login-link">Войти</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <p class="text-center">&copy; 2023 Book Reader & Translator. Все права защищены.</p>
+    </div>
+  </footer>
+
+  <style>
+    .app-description {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #555;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+  </style>
+
+  <script src="/static/script.js"></script>
+</body>
+</html> 
