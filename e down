@@ -1,0 +1,5 @@
+[33mcommit d3d79d35504d7ea53058efeb6a7f92af325f4146[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Hohorror <hohorrorgameinc@gmail.com>
+Date:   Mon Apr 7 11:46:44 2025 +0300
+
+    Add deep-translator package to requirements.txt

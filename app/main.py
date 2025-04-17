@@ -76,7 +76,6 @@ app.add_middleware(
 )
 
 # Обслуживание статических файлов
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Инициализация базы данных
@@ -161,6 +160,12 @@ class UserFile(BaseModel):
     original_filename: str
     file_size: int
     upload_date: str
+
+# Pydantic модель для запроса /api/prepare-book
+class PrepareBookRequest(BaseModel):
+    file_id: str
+    english_text: str
+    russian_text: str
 
 # Настройка безопасности
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -405,19 +410,6 @@ async def delete_file(file_id: str, current_user = Depends(get_current_active_us
         raise HTTPException(status_code=404, detail="File not found or permission denied")
     return {"status": "success", "message": "File deleted successfully"}
 
-# Маршруты для фронтенда
-@app.get("/")
-async def get_index():
-    return FileResponse("app/templates/index.html")
-
-@app.get("/profile")
-async def get_profile():
-    return FileResponse("app/templates/profile.html")
-
-@app.get("/view")
-async def get_viewer():
-    return FileResponse("app/templates/viewer.html")
-
 # Класс для запроса перевода
 class TranslationRequest(BaseModel):
     text: str
@@ -653,35 +645,35 @@ TRANSLATION_DICT = {
 # Инициализация приложения
 @app.on_event("startup")
 async def startup():
-    init_db() 
+    init_db()
 
 @app.post("/api/prepare-book")
-async def prepare_book(request: Request, token: Optional[str] = Cookie(None)):
-    if not token or not verify_token(token):
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    
-    user = get_user_from_token(token)
-    
-    # Получаем данные из запроса
-    data = await request.json()
-    file_id = data.get("file_id")
-    english_text = data.get("english_text")
-    russian_text = data.get("russian_text")
-    
+async def prepare_book(
+    request_data: PrepareBookRequest,  # Используем Pydantic модель
+    current_user: User = Depends(get_current_user) # Используем стандартную зависимость
+):
+    # Удалены проверки токена из Cookie и получение user из токена
+    # Данные получаем из request_data
+
+    file_id = request_data.file_id
+    english_text = request_data.english_text
+    russian_text = request_data.russian_text
+
     if not file_id or not english_text or not russian_text:
-        raise HTTPException(status_code=400, detail="Отсутствуют необходимые данные")
-    
+        raise HTTPException(status_code=400, detail="Отсутствуют необходимые данные: file_id, english_text, russian_text")
+
     # Проверяем, что файл принадлежит пользователю
     conn = sqlite3.connect('app.db')
     c = conn.cursor()
-    
-    c.execute("SELECT id FROM user_files WHERE id = ? AND user_id = ?", (file_id, user["id"]))
+
+    # Используем current_user["id"]
+    c.execute("SELECT id FROM user_files WHERE id = ? AND user_id = ?", (file_id, current_user["id"]))
     file = c.fetchone()
-    
+
     if not file:
         conn.close()
         raise HTTPException(status_code=404, detail="Файл не найден или у вас нет прав доступа к нему")
-    
+
     # Создаем сопоставление между английским и русским текстом
     # Разбиваем текст на предложения и параграфы
     english_paragraphs = [p.strip() for p in english_text.split('\n\n') if p.strip()]
@@ -735,107 +727,40 @@ async def prepare_book(request: Request, token: Optional[str] = Cookie(None)):
     return {"success": True, "message": "Книга успешно подготовлена"}
 
 @app.get("/api/book-mapping/{filename}")
-async def get_book_mapping(filename: str, token: Optional[str] = Cookie(None)):
-    if not token or not verify_token(token):
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    
-    user = get_user_from_token(token)
-    
+async def get_book_mapping(
+    filename: str,
+    current_user: User = Depends(get_current_user) # Используем стандартную зависимость
+):
+    # Удалены проверки токена из Cookie и получение user из токена
+
     # Проверяем, что файл принадлежит пользователю
     conn = sqlite3.connect('app.db')
     c = conn.cursor()
-    
-    # Получаем ID файла по имени файла
-    c.execute("SELECT id FROM user_files WHERE filename = ? AND user_id = ?", (filename, user["id"]))
+
+    # Используем current_user["id"]
+    c.execute("SELECT id FROM user_files WHERE filename = ? AND user_id = ?", (filename, current_user["id"]))
     file = c.fetchone()
-    
+
     if not file:
         conn.close()
         raise HTTPException(status_code=404, detail="Файл не найден или у вас нет прав доступа к нему")
-    
+
     file_id = file[0]
-    
+
     # Получаем сопоставление для файла
     c.execute("SELECT mapping_data FROM files_with_mapping WHERE file_id = ?", (file_id,))
     mapping_data = c.fetchone()
-    
+
     if not mapping_data:
         conn.close()
         raise HTTPException(status_code=404, detail="Сопоставление для этого файла не найдено")
     
     conn.close()
-    
+
     # Парсим JSON-данные из БД
     mapping = json.loads(mapping_data[0])
-    
+
     return mapping
-
-@app.get("/prepare")
-async def prepare_page(request: Request, token: Optional[str] = Cookie(None)):
-    if not token or not verify_token(token):
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Пожалуйста, войдите в систему"})
-    
-    user = get_user_from_token(token)
-    
-    # Получаем список файлов пользователя из базы данных
-    conn = sqlite3.connect('app.db')
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT id, filename, original_filename, file_size, upload_date FROM user_files WHERE user_id = ?", (user["id"],))
-    files_data = cursor.fetchall()
-    
-    # Проверяем, какие файлы уже имеют сопоставление
-    files = []
-    for file in files_data:
-        cursor.execute("SELECT id FROM files_with_mapping WHERE file_id = ?", (file[0],))
-        is_prepared = cursor.fetchone() is not None
-        
-        files.append({
-            "id": file[0],
-            "filename": file[1],
-            "original_filename": file[2],
-            "file_size": file[3],
-            "upload_date": file[4],
-            "is_prepared": is_prepared
-        })
-    
-    conn.close()
-    
-    return templates.TemplateResponse("prepare.html", {"request": request, "user": user, "files": files})
-
-@app.get("/view")
-async def view_file(request: Request, file: str, name: str, token: Optional[str] = Cookie(None)):
-    if not token or not verify_token(token):
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Пожалуйста, войдите в систему"})
-    
-    user = get_user_from_token(token)
-    
-    # Проверяем, есть ли сопоставление для этого файла
-    conn = sqlite3.connect('app.db')
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-    SELECT fm.mapping_data FROM files_with_mapping fm
-    JOIN user_files uf ON fm.file_id = uf.id
-    WHERE uf.filename = ?
-    """, (file,))
-    
-    mapping_data = cursor.fetchone()
-    has_mapping = mapping_data is not None
-    
-    conn.close()
-    
-    # Проверяем, если файл PDF
-    is_pdf = name.lower().endswith('.pdf')
-    
-    return templates.TemplateResponse("viewer.html", {
-        "request": request,
-        "user": user,
-        "filename": file,
-        "original_filename": name,
-        "has_mapping": has_mapping,  # Явно передаем флаг для правильной обработки в шаблоне
-        "is_pdf": is_pdf
-    })
 
 @app.get("/api/dictionary")
 async def get_dictionary(current_user: User = Depends(get_current_user)):
